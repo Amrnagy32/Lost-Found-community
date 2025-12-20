@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.db
+*.sqlite3
+.env
+
+AppData/
+NTUSER.*
+Desktop.ini
+OneDrive/
+Documents/
+Downloads/
+Pictures/
+Music/
+Videos/
