@@ -3,12 +3,9 @@ from app import app as flask_app
 from database import db
 from models import User, Post
 
-# -------------------------------
-# Fixture to create test client
-# -------------------------------
 @pytest.fixture
 def client():
-    # Configure the app for testing
+    # Configure Flask app for testing
     flask_app.config['TESTING'] = True
     flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -21,29 +18,23 @@ def client():
             u.set_password("password123")
             db.session.add(u)
             db.session.commit()
-    
-    # Create test client
+            
     with flask_app.test_client() as client:
         yield client
-
-    # Clean up database after tests
+    
     with flask_app.app_context():
         db.drop_all()
 
-# -------------------------------
-# Helper function to get JWT token
-# -------------------------------
 def get_token(client):
+    # Login and get JWT token
     res = client.post('/auth/login', json={
         "identifier": "testuser",
         "password": "password123"
     })
     return res.get_json()['access_token']
 
-# -------------------------------
-# TEST 1: Changing status to 'claimed' deletes the post
-# -------------------------------
 def test_claimed_status_deletes_from_db(client):
+    """Verifies that 'claimed' status deletes the record"""
     token = get_token(client)
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -54,39 +45,29 @@ def test_claimed_status_deletes_from_db(client):
         db.session.commit()
         post_id = post.id
 
-    # Send PUT request to change status to 'claimed'
     response = client.put(f'/posts/{post_id}', headers=headers, json={"status": "claimed"})
     assert response.status_code == 200
 
-    # Verify the post is removed from the database
     with flask_app.app_context():
         assert Post.query.get(post_id) is None
 
-# -------------------------------
-# TEST 2: Create a new post
-# -------------------------------
 def test_create_post(client):
+    """Test creating a new post"""
     token = get_token(client)
     headers = {"Authorization": f"Bearer {token}"}
-
-    # POST request to create a new post
-    res = client.post('/posts/', headers=headers, json={
+    res = client.post('/posts', headers=headers, json={
         "title": "New Item",
         "category": "Wallet",
         "status": "lost",
         "phone_number": "456"
     })
-
-    # Check response
     assert res.status_code == 201
     data = res.get_json()
     assert data['title'] == "New Item"
     assert data['status'] == "lost"
 
-# -------------------------------
-# TEST 3: User login
-# -------------------------------
 def test_user_login(client):
+    """Test user login functionality"""
     res = client.post('/auth/login', json={
         "identifier": "testuser",
         "password": "password123"
