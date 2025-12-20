@@ -15,7 +15,7 @@ Admins can manage items, users, and view all activities.
 ## Installation
 
 ### Clone the repository
-git clone https://github.com/your-username/lost-and-found.git
+git clone https://github.com/Amrnagy32/Lost-Found-community.git
 cd lost-and-found
 
 ### Backend setup
