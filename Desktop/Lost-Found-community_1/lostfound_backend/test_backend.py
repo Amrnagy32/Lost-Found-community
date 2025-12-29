@@ -5,7 +5,6 @@ from models import User, Post
 
 @pytest.fixture
 def client():
-    # Configure Flask app for testing
     flask_app.config['TESTING'] = True
     flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -26,15 +25,14 @@ def client():
         db.drop_all()
 
 def get_token(client):
-    # Login and get JWT token
     res = client.post('/auth/login', json={
         "identifier": "testuser",
         "password": "password123"
     })
+    assert res.status_code == 200
     return res.get_json()['access_token']
 
 def test_claimed_status_deletes_from_db(client):
-    """Verifies that 'claimed' status deletes the record"""
     token = get_token(client)
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -52,7 +50,6 @@ def test_claimed_status_deletes_from_db(client):
         assert Post.query.get(post_id) is None
 
 def test_create_post(client):
-    """Test creating a new post"""
     token = get_token(client)
     headers = {"Authorization": f"Bearer {token}"}
     res = client.post('/posts', headers=headers, json={
@@ -67,7 +64,6 @@ def test_create_post(client):
     assert data['status'] == "lost"
 
 def test_user_login(client):
-    """Test user login functionality"""
     res = client.post('/auth/login', json={
         "identifier": "testuser",
         "password": "password123"
@@ -75,3 +71,4 @@ def test_user_login(client):
     assert res.status_code == 200
     data = res.get_json()
     assert "access_token" in data
+
