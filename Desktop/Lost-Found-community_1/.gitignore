@@ -1,15 +1,27 @@
+# Python & virtual environment
 venv/
 __pycache__/
+*.pyc
+
+# Databases & env
 *.db
 *.sqlite3
 .env
 
-AppData/
-NTUSER.*
+# Windows system files
 Desktop.ini
+Thumbs.db
+NTUSER.*
+AppData/
 OneDrive/
+
+# Folders you don't want to track
 Documents/
 Downloads/
 Pictures/
 Music/
 Videos/
+
+# Logs
+*.log
+
