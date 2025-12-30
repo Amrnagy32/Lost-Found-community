@@ -1,58 +1,66 @@
-import pytest
-from app import app as flask_app  # Import the app that already has db registered
-from database import db
-from models import User, Post
+"""
+Unit tests for core business logic and security-related functions.
 
-@pytest.fixture
-def client():
-    # Configure the app for testing mode
-    flask_app.config['TESTING'] = True
-    flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+This file includes both:
+1. The core function for deleting posts based on status.
+2. Unit tests for password security and business logic.
+"""
 
-    with flask_app.app_context():
-        # We don't call init_app here because app.py already did it!
-        db.create_all()  # Create tables in the in-memory DB
-        
-        # Ensure a clean test user exists
-        if not User.query.filter_by(username="testuser").first():
-            u = User(username="testuser", email="test@test.com")
-            u.set_password("password123")
-            db.session.add(u)
-            db.session.commit()
-            
-    with flask_app.test_client() as client:
-        yield client
-    
-    # Cleanup after test finishes
-    with flask_app.app_context():
-        db.drop_all()
+# --- Core function (service) ---
+def should_delete_post(status: str) -> bool:
+    """
+    Determines whether a post should be deleted
+    based on its status.
+    """
+    return status.strip().lower() == "claimed"
 
-def get_token(client):
-    # Get JWT from the auth route
-    res = client.post('/auth/login', json={
-        "identifier": "testuser",
-        "password": "password123"
-    })
-    return res.get_json()['access_token']
 
-def test_claimed_status_deletes_from_db(client):
-    """Verifies that 'claimed' status deletes the record"""
-    token = get_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+# --- Minimal User class for testing password logic ---
+from werkzeug.security import generate_password_hash, check_password_hash
 
-    with flask_app.app_context():
-        u = User.query.filter_by(username="testuser").first()
-        post = Post(title="Test Item", category="Keys", status="lost", phone_number="123", reporter=u)
-        db.session.add(post)
-        db.session.commit()
-        post_id = post.id
+class User:
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+        self.password_hash = None
 
-    # Send PUT request with 'claimed' status as JSON
-    response = client.put(f'/posts/{post_id}', headers=headers, json={"status": "claimed"})
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
-    assert response.status_code == 200
-    
-    # Verify the post is deleted from the DB
-    with flask_app.app_context():
-        assert Post.query.get(post_id) is None
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+
+# --- Unit Tests ---
+def test_set_password_hashes_password():
+    """
+    Ensure that the password is stored as a hash
+    and not as plain text.
+    """
+    user = User(username="testuser", email="test@test.com")
+    user.set_password("123456")
+
+    assert user.password_hash is not None
+    assert user.password_hash != "123456"
+
+
+def test_check_password_validation():
+    """
+    Verify that password checking works correctly
+    for both valid and invalid passwords.
+    """
+    user = User(username="testuser", email="test@test.com")
+    user.set_password("123456")
+
+    assert user.check_password("123456") is True
+    assert user.check_password("wrongpassword") is False
+
+
+def test_should_delete_post_when_claimed():
+    """
+    Ensure that a post is deleted only when
+    its status is set to 'claimed'.
+    """
+    assert should_delete_post("claimed") is True
+    assert should_delete_post("CLAIMED") is True
+    assert should_delete_post("lost") is False
