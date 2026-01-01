@@ -1,4 +1,4 @@
- 🕵️‍♂️ Lost & Found Community
+🕵️‍♂️ Lost & Found Community
 
 # Overview
 The Lost & Found Community is a web application that allows users to report lost items and find items within a community.  
@@ -34,6 +34,10 @@ cd frontend
 npm install
 npm start
 
+# Deployment
+The application is deployed and accessible online:  
+[Lost & Found Community Live Site](https://6956c7dd8870fd3cd4a4e9a3--lostfoundcommunity.netlify.app/)
+
 # Workflow
 
 ## User Workflow
@@ -48,7 +52,7 @@ Search / Filter Items
 ## Admin Workflow
 Login  
       ↓  
-Manage Items: Add / Update / Delete  s  
+Manage Items: Add / Update / Delete  
       ↓  
 View All Posts & Activity
 
@@ -62,5 +66,4 @@ lost-and-found/
 │   ├── index.html  
 │   ├── main.js  
 │   └── ...  
-└── README.md  
-
+└── README.md
